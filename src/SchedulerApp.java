@@ -77,7 +77,7 @@ public class SchedulerApp extends Application {
 
         Scene scene = new Scene(scrollPane, 1180, 760);
 
-        stage.setTitle("Non-Preemptive SJF vs Preemptive Priority Scheduling");
+        stage.setTitle("Preemptive SJF vs Preemptive Priority Scheduling");
         stage.setScene(scene);
         stage.setMinWidth(1000);
         stage.setMinHeight(650);
@@ -396,38 +396,38 @@ public class SchedulerApp extends Application {
 
         priorityArea.setText(comparisonService.buildPriorityText(processes));
 
-        ScheduleOutput sjfOut = schedulerService.runNonPreemptiveSJF(processes);
+        ScheduleOutput sjfOut = schedulerService.runPreemptiveSJF(processes);
         ScheduleOutput prOut = schedulerService.runPreemptivePriority(processes);
 
-        Metrics sjfMetrics = schedulerService.calculateMetrics(sjfOut.rows());
-        Metrics prMetrics = schedulerService.calculateMetrics(prOut.rows());
+        Metrics sjfMetrics = schedulerService.calculateMetrics(sjfOut.getRows());
+        Metrics prMetrics = schedulerService.calculateMetrics(prOut.getRows());
 
-        sjfGanttArea.setText(GanttFormatter.buildGanttText(sjfOut.gantt()));
-        priorityGanttArea.setText(GanttFormatter.buildGanttText(prOut.gantt()));
+        sjfGanttArea.setText(GanttFormatter.buildGanttText(sjfOut.getGantt()));
+        priorityGanttArea.setText(GanttFormatter.buildGanttText(prOut.getGantt()));
 
-        sjfResultTable.setItems(FXCollections.observableArrayList(sjfOut.rows()));
-        priorityResultTable.setItems(FXCollections.observableArrayList(prOut.rows()));
+        sjfResultTable.setItems(FXCollections.observableArrayList(sjfOut.getRows()));
+        priorityResultTable.setItems(FXCollections.observableArrayList(prOut.getRows()));
 
         sjfAvgLabel.setText(String.format(
                 "Average WT = %.2f    Average TAT = %.2f    Average RT = %.2f",
-                sjfMetrics.avgWT(),
-                sjfMetrics.avgTAT(),
-                sjfMetrics.avgRT()
+                sjfMetrics.getAvgWT(),
+                sjfMetrics.getAvgTAT(),
+                sjfMetrics.getAvgRT()
         ));
 
         priorityAvgLabel.setText(String.format(
                 "Average WT = %.2f    Average TAT = %.2f    Average RT = %.2f",
-                prMetrics.avgWT(),
-                prMetrics.avgTAT(),
-                prMetrics.avgRT()
+                prMetrics.getAvgWT(),
+                prMetrics.getAvgTAT(),
+                prMetrics.getAvgRT()
         ));
 
         comparisonArea.setText(comparisonService.buildComparisonText(
                 processes,
                 sjfMetrics,
                 prMetrics,
-                sjfOut.rows(),
-                prOut.rows(),
+                sjfOut.getRows(),
+                prOut.getRows(),
                 selectedScenario
         ));
 
@@ -435,8 +435,8 @@ public class SchedulerApp extends Application {
                 processes,
                 sjfMetrics,
                 prMetrics,
-                sjfOut.rows(),
-                prOut.rows(),
+                sjfOut.getRows(),
+                prOut.getRows(),
                 selectedScenario
         ));
     }
@@ -490,10 +490,10 @@ public class SchedulerApp extends Application {
         generateInputRows(processes.size());
 
         for (int i = 0; i < processes.size(); i++) {
-            inputFields.get(i)[0].setText(processes.get(i).pid());
-            inputFields.get(i)[1].setText(String.valueOf(processes.get(i).arrival()));
-            inputFields.get(i)[2].setText(String.valueOf(processes.get(i).burst()));
-            inputFields.get(i)[3].setText(String.valueOf(processes.get(i).priority()));
+            inputFields.get(i)[0].setText(processes.get(i).getPid());
+            inputFields.get(i)[1].setText(String.valueOf(processes.get(i).getArrival()));
+            inputFields.get(i)[2].setText(String.valueOf(processes.get(i).getBurst()));
+            inputFields.get(i)[3].setText(String.valueOf(processes.get(i).getPriority()));
         }
     }
 }
