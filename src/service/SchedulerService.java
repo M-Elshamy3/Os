@@ -9,14 +9,19 @@ import java.util.List;
 
 public class SchedulerService {
 
-    public ScheduleOutput runNonPreemptiveSJF(List<Process> processes) {
+    public ScheduleOutput runPreemptiveSJF(List<Process> processes) {
         int n = processes.size();
 
-        int[] start = new int[n];
+        int[] remaining = new int[n];
+        int[] firstStart = new int[n];
         int[] completion = new int[n];
         boolean[] done = new boolean[n];
 
-        Arrays.fill(start, -1);
+        Arrays.fill(firstStart, -1);
+
+        for (int i = 0; i < n; i++) {
+            remaining[i] = processes.get(i).getBurst();
+        }
 
         int finished = 0;
         int time = 0;
@@ -27,19 +32,17 @@ public class SchedulerService {
             int chosen = -1;
 
             for (int i = 0; i < n; i++) {
-                if (!done[i] && processes.get(i).arrival() <= time) {
+                if (!done[i] && processes.get(i).getArrival() <= time && remaining[i] > 0) {
                     if (chosen == -1) {
                         chosen = i;
-                    } else {
-                        if (processes.get(i).burst() < processes.get(chosen).burst()) {
+                    } else if (remaining[i] < remaining[chosen]) {
+                        chosen = i;
+                    } else if (remaining[i] == remaining[chosen]) {
+                        if (processes.get(i).getArrival() < processes.get(chosen).getArrival()) {
                             chosen = i;
-                        } else if (processes.get(i).burst() == processes.get(chosen).burst()) {
-                            if (processes.get(i).arrival() < processes.get(chosen).arrival()) {
+                        } else if (processes.get(i).getArrival() == processes.get(chosen).getArrival()) {
+                            if (processes.get(i).getInputOrder() < processes.get(chosen).getInputOrder()) {
                                 chosen = i;
-                            } else if (processes.get(i).arrival() == processes.get(chosen).arrival()) {
-                                if (processes.get(i).inputOrder() < processes.get(chosen).inputOrder()) {
-                                    chosen = i;
-                                }
                             }
                         }
                     }
@@ -52,31 +55,35 @@ public class SchedulerService {
                 continue;
             }
 
-            start[chosen] = time;
+            if (firstStart[chosen] == -1) {
+                firstStart[chosen] = time;
+            }
 
-            int burst = processes.get(chosen).burst();
+            appendSegment(gantt, processes.get(chosen).getPid(), time, time + 1);
 
-            appendSegment(gantt, processes.get(chosen).pid(), time, time + burst);
+            remaining[chosen]--;
+            time++;
 
-            time += burst;
-            completion[chosen] = time;
-            done[chosen] = true;
-            finished++;
+            if (remaining[chosen] == 0) {
+                done[chosen] = true;
+                completion[chosen] = time;
+                finished++;
+            }
         }
 
         List<ResultRow> rows = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
-            int tat = completion[i] - processes.get(i).arrival();
-            int wt = tat - processes.get(i).burst();
-            int rt = start[i] - processes.get(i).arrival();
+            int tat = completion[i] - processes.get(i).getArrival();
+            int wt = tat - processes.get(i).getBurst();
+            int rt = firstStart[i] - processes.get(i).getArrival();
 
             rows.add(new ResultRow(
-                    processes.get(i).pid(),
-                    processes.get(i).arrival(),
-                    processes.get(i).burst(),
-                    processes.get(i).priority(),
-                    start[i],
+                    processes.get(i).getPid(),
+                    processes.get(i).getArrival(),
+                    processes.get(i).getBurst(),
+                    processes.get(i).getPriority(),
+                    firstStart[i],
                     completion[i],
                     wt,
                     tat,
@@ -98,7 +105,7 @@ public class SchedulerService {
         Arrays.fill(firstStart, -1);
 
         for (int i = 0; i < n; i++) {
-            remaining[i] = processes.get(i).burst();
+            remaining[i] = processes.get(i).getBurst();
         }
 
         int finished = 0;
@@ -110,22 +117,20 @@ public class SchedulerService {
             int chosen = -1;
 
             for (int i = 0; i < n; i++) {
-                if (!done[i] && processes.get(i).arrival() <= time && remaining[i] > 0) {
+                if (!done[i] && processes.get(i).getArrival() <= time && remaining[i] > 0) {
                     if (chosen == -1) {
                         chosen = i;
-                    } else {
-                        if (processes.get(i).priority() < processes.get(chosen).priority()) {
+                    } else if (processes.get(i).getPriority() < processes.get(chosen).getPriority()) {
+                        chosen = i;
+                    } else if (processes.get(i).getPriority() == processes.get(chosen).getPriority()) {
+                        if (processes.get(i).getArrival() < processes.get(chosen).getArrival()) {
                             chosen = i;
-                        } else if (processes.get(i).priority() == processes.get(chosen).priority()) {
-                            if (processes.get(i).arrival() < processes.get(chosen).arrival()) {
+                        } else if (processes.get(i).getArrival() == processes.get(chosen).getArrival()) {
+                            if (remaining[i] < remaining[chosen]) {
                                 chosen = i;
-                            } else if (processes.get(i).arrival() == processes.get(chosen).arrival()) {
-                                if (remaining[i] < remaining[chosen]) {
+                            } else if (remaining[i] == remaining[chosen]) {
+                                if (processes.get(i).getInputOrder() < processes.get(chosen).getInputOrder()) {
                                     chosen = i;
-                                } else if (remaining[i] == remaining[chosen]) {
-                                    if (processes.get(i).inputOrder() < processes.get(chosen).inputOrder()) {
-                                        chosen = i;
-                                    }
                                 }
                             }
                         }
@@ -143,7 +148,7 @@ public class SchedulerService {
                 firstStart[chosen] = time;
             }
 
-            appendSegment(gantt, processes.get(chosen).pid(), time, time + 1);
+            appendSegment(gantt, processes.get(chosen).getPid(), time, time + 1);
 
             remaining[chosen]--;
             time++;
@@ -156,15 +161,17 @@ public class SchedulerService {
         }
 
         List<ResultRow> rows = new ArrayList<>();
+
         for (int i = 0; i < n; i++) {
-            int tat = completion[i] - processes.get(i).arrival();
-            int wt = tat - processes.get(i).burst();
-            int rt = firstStart[i] - processes.get(i).arrival();
+            int tat = completion[i] - processes.get(i).getArrival();
+            int wt = tat - processes.get(i).getBurst();
+            int rt = firstStart[i] - processes.get(i).getArrival();
+
             rows.add(new ResultRow(
-                    processes.get(i).pid(),
-                    processes.get(i).arrival(),
-                    processes.get(i).burst(),
-                    processes.get(i).priority(),
+                    processes.get(i).getPid(),
+                    processes.get(i).getArrival(),
+                    processes.get(i).getBurst(),
+                    processes.get(i).getPriority(),
                     firstStart[i],
                     completion[i],
                     wt,
@@ -172,6 +179,7 @@ public class SchedulerService {
                     rt
             ));
         }
+
         return new ScheduleOutput(rows, gantt);
     }
 
@@ -189,15 +197,19 @@ public class SchedulerService {
         if (rows == null || rows.isEmpty()) {
             return new Metrics(0, 0, 0);
         }
+
         double wt = 0;
         double tat = 0;
         double rt = 0;
+
         for (ResultRow r : rows) {
-            wt += r.waiting();
-            tat += r.turnaround();
-            rt += r.response();
+            wt += r.getWaiting();
+            tat += r.getTurnaround();
+            rt += r.getResponse();
         }
+
         int n = rows.size();
+
         return new Metrics(wt / n, tat / n, rt / n);
     }
 }
