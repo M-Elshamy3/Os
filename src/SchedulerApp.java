@@ -3,13 +3,7 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Spinner;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -30,6 +24,11 @@ import java.util.List;
 
 public class SchedulerApp extends Application {
 
+    private final List<TextField[]> inputFields = new ArrayList<>();
+    private final ValidationService validationService = new ValidationService();
+    private final SchedulerService schedulerService = new SchedulerService();
+    private final ScenarioService scenarioService = new ScenarioService();
+    private final ComparisonService comparisonService = new ComparisonService();
     private Spinner<Integer> countSpinner;
     private GridPane inputGrid;
     private TextArea validationArea;
@@ -43,14 +42,6 @@ public class SchedulerApp extends Application {
     private Label priorityAvgLabel;
     private TextArea comparisonArea;
     private TextArea conclusionArea;
-
-    private final List<TextField[]> inputFields = new ArrayList<>();
-
-    private final ValidationService validationService = new ValidationService();
-    private final SchedulerService schedulerService = new SchedulerService();
-    private final ScenarioService scenarioService = new ScenarioService();
-    private final ComparisonService comparisonService = new ComparisonService();
-
     private ComparisonService.ScenarioType selectedScenario = ComparisonService.ScenarioType.CUSTOM;
 
     @Override
@@ -85,7 +76,8 @@ public class SchedulerApp extends Application {
         scrollPane.setPannable(true);
 
         Scene scene = new Scene(scrollPane, 1180, 760);
-        stage.setTitle("Preemptive SJF vs Preemptive Priority Scheduling");
+
+        stage.setTitle("Non-Preemptive SJF vs Preemptive Priority Scheduling");
         stage.setScene(scene);
         stage.setMinWidth(1000);
         stage.setMinHeight(650);
@@ -106,6 +98,7 @@ public class SchedulerApp extends Application {
         Button createRowsButton = new Button("Create Rows");
         Button runButton = new Button("Run Comparison");
         Button clearButton = new Button("Clear");
+
         Button scenarioAButton = new Button("Scenario A");
         Button scenarioBButton = new Button("Scenario B");
         Button scenarioCButton = new Button("Scenario C");
@@ -116,6 +109,7 @@ public class SchedulerApp extends Application {
                 createRowsButton, runButton, clearButton,
                 scenarioAButton, scenarioBButton, scenarioCButton, scenarioDButton
         );
+
         controls.setAlignment(Pos.CENTER_LEFT);
 
         inputGrid = new GridPane();
@@ -127,7 +121,15 @@ public class SchedulerApp extends Application {
         validationArea.setPrefRowCount(4);
         validationArea.setPrefHeight(90);
 
-        VBox box = new VBox(10, sectionTitle, controls, inputGrid, new Label("Validation Behavior"), validationArea);
+        VBox box = new VBox(
+                10,
+                sectionTitle,
+                controls,
+                inputGrid,
+                new Label("Validation Behavior"),
+                validationArea
+        );
+
         box.setPadding(new Insets(10));
         box.setStyle("-fx-border-color: black; -fx-border-width: 1;");
 
@@ -222,6 +224,7 @@ public class SchedulerApp extends Application {
         sjfResultTable = TableFactory.createResultTable();
         sjfResultTable.setPrefHeight(260);
         sjfResultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
         sjfAvgLabel = new Label();
 
         VBox left = new VBox(8, sjfTitle, sjfResultTable, sjfAvgLabel);
@@ -234,6 +237,7 @@ public class SchedulerApp extends Application {
         priorityResultTable = TableFactory.createResultTable();
         priorityResultTable.setPrefHeight(260);
         priorityResultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
         priorityAvgLabel = new Label();
 
         VBox right = new VBox(8, prTitle, priorityResultTable, priorityAvgLabel);
@@ -253,6 +257,7 @@ public class SchedulerApp extends Application {
 
         VBox box = new VBox(8, title, comparisonArea);
         box.setStyle("-fx-border-color: black; -fx-border-width: 1; -fx-padding: 10;");
+
         return box;
     }
 
@@ -266,6 +271,7 @@ public class SchedulerApp extends Application {
 
         VBox box = new VBox(8, title, conclusionArea);
         box.setStyle("-fx-border-color: black; -fx-border-width: 1; -fx-padding: 10;");
+
         return box;
     }
 
@@ -289,7 +295,12 @@ public class SchedulerApp extends Application {
             burstField.setPrefWidth(120);
             priorityField.setPrefWidth(120);
 
-            inputFields.add(new TextField[]{pidField, arrivalField, burstField, priorityField});
+            inputFields.add(new TextField[]{
+                    pidField,
+                    arrivalField,
+                    burstField,
+                    priorityField
+            });
 
             inputGrid.add(pidField, 0, i + 1);
             inputGrid.add(arrivalField, 1, i + 1);
@@ -311,82 +322,178 @@ public class SchedulerApp extends Application {
             Integer bt = validationService.parseInteger(btText);
             Integer pr = validationService.parseInteger(prText);
 
-            if (pid.isEmpty()) errors.add("Row " + (i + 1) + ": PID cannot be empty.");
-            if (at == null) errors.add("Row " + (i + 1) + ": Arrival Time must be an integer.");
-            if (bt == null) errors.add("Row " + (i + 1) + ": Burst Time must be an integer.");
-            if (pr == null) errors.add("Row " + (i + 1) + ": Priority must be an integer.");
+            if (pid.isEmpty()) {
+                errors.add("Row " + (i + 1) + ": PID cannot be empty.");
+            }
 
-            processes.add(new Process(pid, at == null ? 0 : at, bt == null ? 0 : bt, pr == null ? 0 : pr, i));
+            if (at == null) {
+                errors.add("Row " + (i + 1) + ": Arrival Time must be an integer.");
+            }
+
+            if (bt == null) {
+                errors.add("Row " + (i + 1) + ": Burst Time must be an integer.");
+            }
+
+            if (pr == null) {
+                errors.add("Row " + (i + 1) + ": Priority must be an integer.");
+            }
+
+            processes.add(new Process(
+                    pid,
+                    at == null ? 0 : at,
+                    bt == null ? 0 : bt,
+                    pr == null ? 0 : pr,
+                    i
+            ));
         }
 
         validationService.validateProcesses(processes, errors);
+
         return processes;
     }
 
     private void runSimulation() {
         validationArea.clear();
+
         List<String> errors = new ArrayList<>();
         List<Process> processes = readProcesses(errors);
 
+        selectedScenario = scenarioService.detectScenario(processes);
+
         if (!errors.isEmpty()) {
             validationArea.setText(String.join("\n", errors));
+
+            clearOutputOnly();
+
+            if (selectedScenario == ComparisonService.ScenarioType.D_VALIDATION) {
+                Metrics emptyMetrics = new Metrics(0, 0, 0);
+
+                comparisonArea.setText(comparisonService.buildComparisonText(
+                        processes,
+                        emptyMetrics,
+                        emptyMetrics,
+                        new ArrayList<>(),
+                        new ArrayList<>(),
+                        selectedScenario
+                ));
+
+                conclusionArea.setText(comparisonService.buildConclusionText(
+                        processes,
+                        emptyMetrics,
+                        emptyMetrics,
+                        new ArrayList<>(),
+                        new ArrayList<>(),
+                        selectedScenario
+                ));
+            }
+
             return;
         }
 
+        validationArea.setText("Input is valid. Detected workload type: " + getScenarioDisplayName(selectedScenario));
+
         processTable.setItems(FXCollections.observableArrayList(processes));
+
         priorityArea.setText(comparisonService.buildPriorityText(processes));
 
-        ScheduleOutput sjfOut = schedulerService.runPreemptiveSJF(processes);
+        ScheduleOutput sjfOut = schedulerService.runNonPreemptiveSJF(processes);
         ScheduleOutput prOut = schedulerService.runPreemptivePriority(processes);
 
-        Metrics sjfMetrics = schedulerService.calculateMetrics(sjfOut.getRows());
-        Metrics prMetrics = schedulerService.calculateMetrics(prOut.getRows());
+        Metrics sjfMetrics = schedulerService.calculateMetrics(sjfOut.rows());
+        Metrics prMetrics = schedulerService.calculateMetrics(prOut.rows());
 
-        sjfGanttArea.setText(GanttFormatter.buildGanttText(sjfOut.getGantt()));
-        priorityGanttArea.setText(GanttFormatter.buildGanttText(prOut.getGantt()));
+        sjfGanttArea.setText(GanttFormatter.buildGanttText(sjfOut.gantt()));
+        priorityGanttArea.setText(GanttFormatter.buildGanttText(prOut.gantt()));
 
-        sjfResultTable.setItems(FXCollections.observableArrayList(sjfOut.getRows()));
-        priorityResultTable.setItems(FXCollections.observableArrayList(prOut.getRows()));
+        sjfResultTable.setItems(FXCollections.observableArrayList(sjfOut.rows()));
+        priorityResultTable.setItems(FXCollections.observableArrayList(prOut.rows()));
 
-        sjfAvgLabel.setText(String.format("Average WT = %.2f    Average TAT = %.2f    Average RT = %.2f",
-                sjfMetrics.getAvgWT(), sjfMetrics.getAvgTAT(), sjfMetrics.getAvgRT()));
+        sjfAvgLabel.setText(String.format(
+                "Average WT = %.2f    Average TAT = %.2f    Average RT = %.2f",
+                sjfMetrics.avgWT(),
+                sjfMetrics.avgTAT(),
+                sjfMetrics.avgRT()
+        ));
 
-        priorityAvgLabel.setText(String.format("Average WT = %.2f    Average TAT = %.2f    Average RT = %.2f",
-                prMetrics.getAvgWT(), prMetrics.getAvgTAT(), prMetrics.getAvgRT()));
+        priorityAvgLabel.setText(String.format(
+                "Average WT = %.2f    Average TAT = %.2f    Average RT = %.2f",
+                prMetrics.avgWT(),
+                prMetrics.avgTAT(),
+                prMetrics.avgRT()
+        ));
 
         comparisonArea.setText(comparisonService.buildComparisonText(
-                processes, sjfMetrics, prMetrics, sjfOut.getRows(), prOut.getRows(), selectedScenario
+                processes,
+                sjfMetrics,
+                prMetrics,
+                sjfOut.rows(),
+                prOut.rows(),
+                selectedScenario
         ));
 
         conclusionArea.setText(comparisonService.buildConclusionText(
-                processes, sjfMetrics, prMetrics, sjfOut.getRows(), prOut.getRows(), selectedScenario
+                processes,
+                sjfMetrics,
+                prMetrics,
+                sjfOut.rows(),
+                prOut.rows(),
+                selectedScenario
         ));
+    }
+
+    private String getScenarioDisplayName(ComparisonService.ScenarioType scenario) {
+        switch (scenario) {
+            case A_BASIC_MIXED:
+                return "Scenario A - Basic mixed workload";
+            case B_CONFLICT:
+                return "Scenario B - Conflict between burst time and priority";
+            case C_FAIRNESS:
+                return "Scenario C - Fairness / starvation-sensitive case";
+            case D_VALIDATION:
+                return "Scenario D - Validation case";
+            default:
+                return "Custom workload";
+        }
+    }
+
+    private void clearOutputOnly() {
+        processTable.setItems(FXCollections.observableArrayList());
+        priorityArea.clear();
+
+        sjfGanttArea.clear();
+        priorityGanttArea.clear();
+
+        sjfResultTable.setItems(FXCollections.observableArrayList());
+        priorityResultTable.setItems(FXCollections.observableArrayList());
+
+        comparisonArea.clear();
+        conclusionArea.clear();
+
+        sjfAvgLabel.setText("");
+        priorityAvgLabel.setText("");
     }
 
     private void clearAll() {
         selectedScenario = ComparisonService.ScenarioType.CUSTOM;
+
         countSpinner.getValueFactory().setValue(5);
         generateInputRows(5);
+
         validationArea.clear();
-        processTable.getItems().clear();
-        priorityArea.clear();
-        sjfGanttArea.clear();
-        priorityGanttArea.clear();
-        sjfResultTable.getItems().clear();
-        priorityResultTable.getItems().clear();
-        comparisonArea.clear();
-        conclusionArea.clear();
-        sjfAvgLabel.setText("");
-        priorityAvgLabel.setText("");
+
+        clearOutputOnly();
     }
+
     private void loadScenario(List<Process> processes) {
         countSpinner.getValueFactory().setValue(processes.size());
+
         generateInputRows(processes.size());
+
         for (int i = 0; i < processes.size(); i++) {
-            inputFields.get(i)[0].setText(processes.get(i).getPid());
-            inputFields.get(i)[1].setText(String.valueOf(processes.get(i).getArrival()));
-            inputFields.get(i)[2].setText(String.valueOf(processes.get(i).getBurst()));
-            inputFields.get(i)[3].setText(String.valueOf(processes.get(i).getPriority()));
+            inputFields.get(i)[0].setText(processes.get(i).pid());
+            inputFields.get(i)[1].setText(String.valueOf(processes.get(i).arrival()));
+            inputFields.get(i)[2].setText(String.valueOf(processes.get(i).burst()));
+            inputFields.get(i)[3].setText(String.valueOf(processes.get(i).priority()));
         }
     }
 }
