@@ -13,16 +13,16 @@ public class TableFactory {
         TableView<Process> table = new TableView<>();
 
         TableColumn<Process, String> pid = new TableColumn<>("PID");
-        pid.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getPid()));
+        pid.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().pid()));
 
         TableColumn<Process, Number> arrival = new TableColumn<>("Arrival");
-        arrival.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getArrival()));
+        arrival.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().arrival()));
 
         TableColumn<Process, Number> burst = new TableColumn<>("Burst");
-        burst.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getBurst()));
+        burst.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().burst()));
 
         TableColumn<Process, Number> priority = new TableColumn<>("Priority");
-        priority.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getPriority()));
+        priority.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().priority()));
 
         table.getColumns().addAll(pid, arrival, burst, priority);
         return table;
@@ -32,31 +32,31 @@ public class TableFactory {
         TableView<ResultRow> table = new TableView<>();
 
         TableColumn<ResultRow, String> pid = new TableColumn<>("PID");
-        pid.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getPid()));
+        pid.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().pid()));
 
         TableColumn<ResultRow, Number> at = new TableColumn<>("AT");
-        at.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getArrival()));
+        at.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().arrival()));
 
         TableColumn<ResultRow, Number> bt = new TableColumn<>("BT");
-        bt.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getBurst()));
+        bt.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().burst()));
 
         TableColumn<ResultRow, Number> pr = new TableColumn<>("PR");
-        pr.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getPriority()));
+        pr.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().priority()));
 
         TableColumn<ResultRow, Number> st = new TableColumn<>("ST");
-        st.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getStart()));
+        st.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().start()));
 
         TableColumn<ResultRow, Number> ct = new TableColumn<>("CT");
-        ct.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getCompletion()));
+        ct.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().completion()));
 
         TableColumn<ResultRow, Number> wt = new TableColumn<>("WT");
-        wt.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getWaiting()));
+        wt.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().waiting()));
 
         TableColumn<ResultRow, Number> tat = new TableColumn<>("TAT");
-        tat.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getTurnaround()));
+        tat.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().turnaround()));
 
         TableColumn<ResultRow, Number> rt = new TableColumn<>("RT");
-        rt.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getResponse()));
+        rt.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().response()));
 
         table.getColumns().addAll(pid, at, bt, pr, st, ct, wt, tat, rt);
         return table;
