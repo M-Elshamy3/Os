@@ -24,25 +24,25 @@ public class ValidationService {
         }
 
         for (Process p : processes) {
-            String name = p.pid().isEmpty() ? "Blank PID" : p.pid();
+            String name = p.getPid().isEmpty() ? "Blank PID" : p.getPid();
 
-            if (!p.pid().isEmpty()) {
-                if (used.contains(p.pid())) {
-                    errors.add("Duplicate PID found: " + p.pid());
+            if (!p.getPid().isEmpty()) {
+                if (used.contains(p.getPid())) {
+                    errors.add("Duplicate PID found: " + p.getPid());
                 }
 
-                used.add(p.pid());
+                used.add(p.getPid());
             }
 
-            if (p.arrival() < 0) {
+            if (p.getArrival() < 0) {
                 errors.add(name + ": Arrival Time cannot be negative.");
             }
 
-            if (p.burst() <= 0) {
+            if (p.getBurst() <= 0) {
                 errors.add(name + ": Burst Time must be greater than zero.");
             }
 
-            if (p.priority() <= 0) {
+            if (p.getPriority() <= 0) {
                 errors.add(name + ": Priority must be greater than zero.");
             }
         }
