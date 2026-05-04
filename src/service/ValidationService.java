@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Set;
 
 public class ValidationService {
+
     public Integer parseInteger(String s) {
         try {
-            return Integer.parseInt(s);
+            return Integer.parseInt(s.trim());
         } catch (Exception e) {
             return null;
         }
@@ -23,19 +24,26 @@ public class ValidationService {
         }
 
         for (Process p : processes) {
-            if (!p.getPid().isEmpty()) {
-                if (used.contains(p.getPid())) {
-                    errors.add("Duplicate PID found: " + p.getPid());
+            String name = p.pid().isEmpty() ? "Blank PID" : p.pid();
+
+            if (!p.pid().isEmpty()) {
+                if (used.contains(p.pid())) {
+                    errors.add("Duplicate PID found: " + p.pid());
                 }
-                used.add(p.getPid());
+
+                used.add(p.pid());
             }
 
-            if (p.getArrival() < 0) {
-                errors.add((p.getPid().isEmpty() ? "Blank PID" : p.getPid()) + ": Arrival Time cannot be negative.");
+            if (p.arrival() < 0) {
+                errors.add(name + ": Arrival Time cannot be negative.");
             }
 
-            if (p.getBurst() <= 0) {
-                errors.add((p.getPid().isEmpty() ? "Blank PID" : p.getPid()) + ": Burst Time must be greater than zero.");
+            if (p.burst() <= 0) {
+                errors.add(name + ": Burst Time must be greater than zero.");
+            }
+
+            if (p.priority() <= 0) {
+                errors.add(name + ": Priority must be greater than zero.");
             }
         }
     }
