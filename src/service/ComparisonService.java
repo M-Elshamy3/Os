@@ -8,21 +8,19 @@ import java.util.List;
 
 public class ComparisonService {
 
-    public enum ScenarioType {
-        A_BASIC_MIXED,
-        B_CONFLICT,
-        C_FAIRNESS,
-        D_VALIDATION,
-        CUSTOM
-    }
-
     public String buildPriorityText(List<Process> processes) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Priority rule: smaller number means higher priority\n\n");
+
+        sb.append("Priority rule: smaller number means higher priority.\n");
+        sb.append("Priority mode: preemptive priority scheduling.\n");
+        sb.append("Tie handling: priority, then arrival time, then remaining burst time, then input order.\n\n");
+
         sb.append("PID\tPriority\n");
+
         for (Process p : processes) {
-            sb.append(p.getPid()).append("\t").append(p.getPriority()).append("\n");
+            sb.append(p.pid()).append("\t").append(p.priority()).append("\n");
         }
+
         return sb.toString();
     }
 
@@ -35,8 +33,8 @@ public class ComparisonService {
             return buildValidationAnalysis(processes);
         }
 
-        int sjfWorst = sjfRows.stream().mapToInt(ResultRow::getWaiting).max().orElse(0);
-        int prWorst = prRows.stream().mapToInt(ResultRow::getWaiting).max().orElse(0);
+        int sjfWorst = sjfRows.stream().mapToInt(ResultRow::waiting).max().orElse(0);
+        int prWorst = prRows.stream().mapToInt(ResultRow::waiting).max().orElse(0);
 
         sb.append("Metric Comparison\n");
         sb.append("Selected workload type: ").append(getScenarioLabel(scenario)).append("\n\n");
@@ -79,8 +77,8 @@ public class ComparisonService {
             return buildValidationConclusion(processes);
         }
 
-        int sjfWorst = sjfRows.stream().mapToInt(ResultRow::getWaiting).max().orElse(0);
-        int prWorst = prRows.stream().mapToInt(ResultRow::getWaiting).max().orElse(0);
+        int sjfWorst = sjfRows.stream().mapToInt(ResultRow::waiting).max().orElse(0);
+        int prWorst = prRows.stream().mapToInt(ResultRow::waiting).max().orElse(0);
 
         sb.append("Conclusion\n");
         sb.append("Selected workload type: ").append(getScenarioLabel(scenario)).append("\n\n");
@@ -134,25 +132,25 @@ public class ComparisonService {
     private String buildMetricSummary(Metrics sjf, Metrics pr, int sjfWorst, int prWorst) {
         StringBuilder sb = new StringBuilder();
 
-        if (sjf.getAvgWT() < pr.getAvgWT()) {
+        if (sjf.avgWT() < pr.avgWT()) {
             sb.append("Lower average waiting time: SJF\n");
-        } else if (pr.getAvgWT() < sjf.getAvgWT()) {
+        } else if (pr.avgWT() < sjf.avgWT()) {
             sb.append("Lower average waiting time: Priority Scheduling\n");
         } else {
             sb.append("Average waiting time: equal in both algorithms\n");
         }
 
-        if (sjf.getAvgTAT() < pr.getAvgTAT()) {
+        if (sjf.avgTAT() < pr.avgTAT()) {
             sb.append("Lower average turnaround time: SJF\n");
-        } else if (pr.getAvgTAT() < sjf.getAvgTAT()) {
+        } else if (pr.avgTAT() < sjf.avgTAT()) {
             sb.append("Lower average turnaround time: Priority Scheduling\n");
         } else {
             sb.append("Average turnaround time: equal in both algorithms\n");
         }
 
-        if (sjf.getAvgRT() < pr.getAvgRT()) {
+        if (sjf.avgRT() < pr.avgRT()) {
             sb.append("Lower average response time: SJF\n");
-        } else if (pr.getAvgRT() < sjf.getAvgRT()) {
+        } else if (pr.avgRT() < sjf.avgRT()) {
             sb.append("Lower average response time: Priority Scheduling\n");
         } else {
             sb.append("Average response time: equal in both algorithms\n");
@@ -170,7 +168,7 @@ public class ComparisonService {
     }
 
     private String answerWaitingTime(ScenarioType scenario, Metrics sjf, Metrics pr) {
-        if (sjf.getAvgWT() < pr.getAvgWT()) {
+        if (sjf.avgWT() < pr.avgWT()) {
             switch (scenario) {
                 case A_BASIC_MIXED:
                     return "SJF gave the lower average waiting time in this mixed workload because serving shorter jobs earlier improved the general flow of execution.\n";
@@ -181,7 +179,7 @@ public class ComparisonService {
                 default:
                     return "SJF gave the lower average waiting time for this custom input.\n";
             }
-        } else if (pr.getAvgWT() < sjf.getAvgWT()) {
+        } else if (pr.avgWT() < sjf.avgWT()) {
             switch (scenario) {
                 case A_BASIC_MIXED:
                     return "Priority Scheduling gave the lower average waiting time in this mixed workload, showing that the selected priority order worked well for these arrivals.\n";
@@ -207,7 +205,7 @@ public class ComparisonService {
     }
 
     private String answerTurnaroundTime(ScenarioType scenario, Metrics sjf, Metrics pr) {
-        if (sjf.getAvgTAT() < pr.getAvgTAT()) {
+        if (sjf.avgTAT() < pr.avgTAT()) {
             switch (scenario) {
                 case A_BASIC_MIXED:
                     return "SJF gave the lower average turnaround time in this normal mixed workload, meaning processes completed more efficiently overall.\n";
@@ -218,7 +216,7 @@ public class ComparisonService {
                 default:
                     return "SJF gave the lower average turnaround time for this custom input.\n";
             }
-        } else if (pr.getAvgTAT() < sjf.getAvgTAT()) {
+        } else if (pr.avgTAT() < sjf.avgTAT()) {
             switch (scenario) {
                 case A_BASIC_MIXED:
                     return "Priority Scheduling gave the lower average turnaround time in this normal mixed workload, showing that urgent processes were handled efficiently.\n";
@@ -252,7 +250,7 @@ public class ComparisonService {
             case C_FAIRNESS:
                 return "Yes. SJF still favors short jobs strongly, and that behavior can increase the waiting time of longer jobs in a fairness-sensitive case.\n";
             default:
-                return "Yes. By definition, SJF always prefers the shortest available job or shortest remaining job.\n";
+                return "Yes. By definition, non-preemptive SJF always selects the shortest available job when the CPU becomes free.\n";
         }
     }
 
@@ -310,8 +308,8 @@ public class ComparisonService {
     }
 
     private String buildRecommendation(ScenarioType scenario, Metrics sjf, Metrics pr, int sjfWorst, int prWorst) {
-        boolean sjfBetterAvg = sjf.getAvgWT() <= pr.getAvgWT() && sjf.getAvgTAT() <= pr.getAvgTAT();
-        boolean prBetterAvg = pr.getAvgWT() <= sjf.getAvgWT() && pr.getAvgTAT() <= sjf.getAvgTAT();
+        boolean sjfBetterAvg = sjf.avgWT() <= pr.avgWT() && sjf.avgTAT() <= pr.avgTAT();
+        boolean prBetterAvg = pr.avgWT() <= sjf.avgWT() && pr.avgTAT() <= sjf.avgTAT();
 
         switch (scenario) {
             case A_BASIC_MIXED:
@@ -333,9 +331,9 @@ public class ComparisonService {
                 }
 
             case C_FAIRNESS:
-                if (sjfWorst < prWorst && sjf.getAvgWT() <= pr.getAvgWT()) {
+                if (sjfWorst < prWorst && sjf.avgWT() <= pr.avgWT()) {
                     return "For this fairness-sensitive workload, SJF is recommended because it controlled worst-case waiting better while still remaining efficient.\n";
-                } else if (prWorst < sjfWorst && pr.getAvgWT() <= sjf.getAvgWT()) {
+                } else if (prWorst < sjfWorst && pr.avgWT() <= sjf.avgWT()) {
                     return "For this fairness-sensitive workload, Priority Scheduling is recommended because it reduced the larger starvation-like delay more effectively.\n";
                 } else {
                     return "For this fairness-sensitive workload, the safer recommendation is the algorithm that better limits extreme waiting, even if the average metrics are close.\n";
@@ -356,14 +354,14 @@ public class ComparisonService {
         int sjfWins = 0;
         int prWins = 0;
 
-        if (sjf.getAvgWT() < pr.getAvgWT()) sjfWins++;
-        else if (pr.getAvgWT() < sjf.getAvgWT()) prWins++;
+        if (sjf.avgWT() < pr.avgWT()) sjfWins++;
+        else if (pr.avgWT() < sjf.avgWT()) prWins++;
 
-        if (sjf.getAvgTAT() < pr.getAvgTAT()) sjfWins++;
-        else if (pr.getAvgTAT() < sjf.getAvgTAT()) prWins++;
+        if (sjf.avgTAT() < pr.avgTAT()) sjfWins++;
+        else if (pr.avgTAT() < sjf.avgTAT()) prWins++;
 
-        if (sjf.getAvgRT() < pr.getAvgRT()) sjfWins++;
-        else if (pr.getAvgRT() < sjf.getAvgRT()) prWins++;
+        if (sjf.avgRT() < pr.avgRT()) sjfWins++;
+        else if (pr.avgRT() < sjf.avgRT()) prWins++;
 
         if (sjfWins > prWins) {
             switch (scenario) {
@@ -404,16 +402,16 @@ public class ComparisonService {
     private String buildMetricSpecificConclusion(Metrics sjf, Metrics pr) {
         StringBuilder sb = new StringBuilder();
 
-        if (sjf.getAvgWT() < pr.getAvgWT()) sb.append("SJF handled waiting time better.\n");
-        else if (pr.getAvgWT() < sjf.getAvgWT()) sb.append("Priority Scheduling handled waiting time better.\n");
+        if (sjf.avgWT() < pr.avgWT()) sb.append("SJF handled waiting time better.\n");
+        else if (pr.avgWT() < sjf.avgWT()) sb.append("Priority Scheduling handled waiting time better.\n");
         else sb.append("Both handled waiting time equally.\n");
 
-        if (sjf.getAvgTAT() < pr.getAvgTAT()) sb.append("SJF handled turnaround time better.\n");
-        else if (pr.getAvgTAT() < sjf.getAvgTAT()) sb.append("Priority Scheduling handled turnaround time better.\n");
+        if (sjf.avgTAT() < pr.avgTAT()) sb.append("SJF handled turnaround time better.\n");
+        else if (pr.avgTAT() < sjf.avgTAT()) sb.append("Priority Scheduling handled turnaround time better.\n");
         else sb.append("Both handled turnaround time equally.\n");
 
-        if (sjf.getAvgRT() < pr.getAvgRT()) sb.append("SJF handled response time better.\n");
-        else if (pr.getAvgRT() < sjf.getAvgRT()) sb.append("Priority Scheduling handled response time better.\n");
+        if (sjf.avgRT() < pr.avgRT()) sb.append("SJF handled response time better.\n");
+        else if (pr.avgRT() < sjf.avgRT()) sb.append("Priority Scheduling handled response time better.\n");
         else sb.append("Both handled response time equally.\n");
 
         return sb.toString();
@@ -489,13 +487,13 @@ public class ComparisonService {
         sb.append("Observed input review:\n");
         for (Process p : processes) {
             sb.append("Process ")
-                    .append(p.getPid())
+                    .append(p.pid())
                     .append(": arrival=")
-                    .append(p.getArrival())
+                    .append(p.arrival())
                     .append(", burst=")
-                    .append(p.getBurst())
+                    .append(p.burst())
                     .append(", priority=")
-                    .append(p.getPriority())
+                    .append(p.priority())
                     .append("\n");
         }
 
@@ -506,12 +504,19 @@ public class ComparisonService {
     }
 
     private String buildValidationConclusion(List<Process> processes) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Conclusion\n");
-        sb.append("Selected workload type: Scenario D - Validation case\n\n");
-        sb.append("This scenario is not meant to compare scheduling metrics. Its purpose is to verify that invalid input is detected and blocked correctly.\n\n");
-        sb.append("A correct implementation should reject duplicated or empty process IDs, negative arrival times, non-positive burst times, and invalid priority values.\n");
-        sb.append("The final recommendation for this scenario is to fix invalid entries first, then rerun the scheduling comparison using valid data only.\n");
-        return sb.toString();
+        String sb = "Conclusion\n" +
+                "Selected workload type: Scenario D - Validation case\n\n" +
+                "This scenario is not meant to compare scheduling metrics. Its purpose is to verify that invalid input is detected and blocked correctly.\n\n" +
+                "A correct implementation should reject duplicated or empty process IDs, negative arrival times, non-positive burst times, and invalid priority values.\n" +
+                "The final recommendation for this scenario is to fix invalid entries first, then rerun the scheduling comparison using valid data only.\n";
+        return sb;
+    }
+
+    public enum ScenarioType {
+        A_BASIC_MIXED,
+        B_CONFLICT,
+        C_FAIRNESS,
+        D_VALIDATION,
+        CUSTOM
     }
 }
