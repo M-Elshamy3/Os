@@ -77,19 +77,19 @@ public class ScenarioService {
             Process a = actual.get(i);
             Process s = saved.get(i);
 
-            if (!a.pid().equals(s.pid())) {
+            if (!a.getPid().equals(s.getPid())) {
                 return false;
             }
 
-            if (a.arrival() != s.arrival()) {
+            if (a.getArrival() != s.getArrival()) {
                 return false;
             }
 
-            if (a.burst() != s.burst()) {
+            if (a.getBurst() != s.getBurst()) {
                 return false;
             }
 
-            if (a.priority() != s.priority()) {
+            if (a.getPriority() != s.getPriority()) {
                 return false;
             }
         }
